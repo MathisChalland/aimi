@@ -13,5 +13,6 @@ export const chatMessageSchema = z.object({
   createdAt: z.date(),
 });
 
+export type BaseMessage = z.infer<typeof baseMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 export type MessageRole = z.infer<typeof messageRoleSchema>;
