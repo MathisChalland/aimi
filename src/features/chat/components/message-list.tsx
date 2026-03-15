@@ -4,18 +4,12 @@ import { useEffect, useRef } from "react";
 import {
   MessageBubble,
   TypingIndicator,
-} from "@/components/chat/message-bubble";
+} from "@/features/chat/components/message-bubble";
 import { cn } from "@/lib/utils";
-
-interface Message {
-  id: string;
-  role: string;
-  content: string;
-  createdAt: Date;
-}
+import type { ChatMessage } from "../schemas";
 
 interface MessageListProps {
-  messages: Message[];
+  messages: ChatMessage[];
   isTyping: boolean;
   className?: string;
 }
@@ -36,7 +30,7 @@ export function MessageList({
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
-          role={message.role as "user" | "assistant"}
+          role={message.role}
           content={message.content}
           createdAt={message.createdAt}
         />
