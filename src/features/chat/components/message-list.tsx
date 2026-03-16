@@ -7,7 +7,7 @@ import {
   TypingIndicator,
 } from "@/features/chat/components/message-bubble";
 import { cn } from "@/lib/utils";
-import type { ChatMessage } from "../schemas";
+import type { ChatMessage } from "@/features/ai/schemas";
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -32,14 +32,16 @@ export function MessageList({
 
   return (
     <div className={cn("flex-col gap-4", className)}>
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          role={message.role}
-          content={message.content}
-          createdAt={message.createdAt}
-        />
-      ))}
+      {messages.map((message) =>
+        message.role !== "system" ? (
+          <MessageBubble
+            key={message.id}
+            role={message.role}
+            content={message.content}
+            createdAt={message.createdAt}
+          />
+        ) : null,
+      )}
       {isTyping && <TypingIndicator />}
       <div ref={bottomRef} />
     </div>

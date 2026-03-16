@@ -2,7 +2,6 @@
 
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
-import type { BaseMessage } from "./schemas";
 
 const LLM_CONTEXT_SIZE = 20;
 

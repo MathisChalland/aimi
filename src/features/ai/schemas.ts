@@ -1,6 +1,6 @@
 import z from "zod";
 
-const messageRoleSchema = z.enum(["user", "assistant"]);
+const messageRoleSchema = z.enum(["system", "user", "assistant"]);
 
 export const baseMessageSchema = z.object({
   role: messageRoleSchema,
