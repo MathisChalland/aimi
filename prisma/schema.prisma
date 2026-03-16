@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+  extensions      = [vector]
 }
 
 // NOTE: When using mysql or sqlserver, uncomment the //@db.Text annotations in model Account below
@@ -23,6 +25,7 @@ model User {
   accounts      Account[]
   conversations Conversation[]
   companions    Companion[]
+  memories      Memory[]
 
   @@unique([email])
   @@map("user")
@@ -88,6 +91,7 @@ model Companion {
   userId String
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memories      Memory[]
   conversations Conversation[]
 
   createdAt DateTime @default(now())
@@ -124,4 +128,27 @@ model Message {
 
   @@index([conversationId])
   @@map("message")
+}
+
+model Memory {
+  id          String    @id @default(uuid())
+  userId      String
+  companionId String
+  content     String
+  metadata    Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+
+  embedding Unsupported("vector(1536)")?
+  //CREATE EXTENSION IF NOT EXISTS vector;
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companion Companion @relation(fields: [companionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([companionId])
+  @@index([userId, companionId])
+  //CREATE INDEX IF NOT EXISTS memories_embedding_idx
+  //ON memories USING hnsw (embedding vector_cosine_ops);
+  @@map("memories")
 }
