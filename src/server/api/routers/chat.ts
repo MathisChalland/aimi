@@ -16,12 +16,28 @@ export const chatRouter = createTRPCRouter({
 
     let conversation = await ctx.db.conversation.findFirst({
       where: { userId },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
+      include: {
+        companion: true,
+        messages: { orderBy: { createdAt: "asc" } },
+      },
     });
 
     conversation ??= await ctx.db.conversation.create({
-      data: { userId },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
+      data: {
+        user: {
+          connect: { id: userId },
+        },
+        companion: {
+          create: {
+            name: "Aimi",
+            userId,
+          },
+        },
+      },
+      include: {
+        companion: true,
+        messages: { orderBy: { createdAt: "asc" } },
+      },
     });
 
     return conversation;

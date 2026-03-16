@@ -15,7 +15,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-dvh w-full flex-col">
-      <ChatHeader />
+      <ChatHeader companionName={conversation?.companion.name} />
       <div className="-mb-0.5 min-h-0 flex-1 overflow-y-auto">
         {conversation ? (
           <MessageList
