@@ -40,7 +40,7 @@ export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-2 pb-4">
-      <div className="bg-background flex items-end gap-2 rounded-2xl border p-3 shadow-sm">
+      <div className="bg-background flex items-end gap-2 rounded-2xl border p-1 shadow-sm">
         <Textarea
           ref={textareaRef}
           value={value}
@@ -55,7 +55,7 @@ export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
         />
         <Button
           size="icon"
-          className="shrink-0"
+          className="shrink-0 rounded-full"
           onClick={handleSend}
           disabled={!value.trim() || sendDisabled}
         >

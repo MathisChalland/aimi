@@ -91,7 +91,10 @@ export function MessageBubbleSkeleton({
   return (
     <div className={cn("flex items-start gap-3", isUser && "flex-row-reverse")}>
       <div className="flex max-w-[80%] flex-col gap-1">
-        <Bubble isUser={isUser} className={cn("animate-pulse", width)}>
+        <Bubble
+          isUser={isUser}
+          className={cn("max-w-full animate-pulse", width)}
+        >
           <div className="flex flex-col gap-2">
             {Array.from({ length: lines + 1 }).map((_, i) => (
               <div
