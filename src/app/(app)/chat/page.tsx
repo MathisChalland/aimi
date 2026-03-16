@@ -11,7 +11,10 @@ import { useSendMessage } from "@/features/chat/use-send-message";
 
 export default function ChatPage() {
   const { data: conversation } = api.chat.getUserConversation.useQuery();
-  const { sendMessage, isResponding } = useSendMessage(conversation?.id);
+  const { sendMessage, isResponding } = useSendMessage(
+    conversation?.id,
+    conversation?.companionId,
+  );
 
   return (
     <div className="flex h-dvh w-full flex-col">

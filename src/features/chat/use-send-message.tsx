@@ -9,7 +9,7 @@ export type Conversation = NonNullable<
   RouterOutputs["chat"]["getUserConversation"]
 >;
 
-export function useSendMessage(conversationId?: string) {
+export function useSendMessage(conversationId?: string, companionId?: string) {
   const utils = api.useUtils();
 
   const sendMutation = api.chat.send.useMutation({
@@ -54,7 +54,7 @@ export function useSendMessage(conversationId?: string) {
   });
 
   const sendMessage = (content: string) => {
-    if (!conversationId) return;
+    if (!conversationId || !companionId) return;
     const trimmed = content.trim();
     if (!trimmed || sendMutation.isPending) return;
 
@@ -67,6 +67,7 @@ export function useSendMessage(conversationId?: string) {
 
     sendMutation.mutate({
       conversationId,
+      companionId,
       messages: contextMessages,
       newMessage: { role: "user", content: trimmed },
     });

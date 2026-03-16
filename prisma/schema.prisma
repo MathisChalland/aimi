@@ -131,13 +131,13 @@ model Message {
 }
 
 model Memory {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   userId      String
   companionId String
   content     String
-  metadata    Json      @default("{}")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 
   embedding Unsupported("vector(1536)")?
   //CREATE EXTENSION IF NOT EXISTS vector;

@@ -21,7 +21,6 @@ export class OpenAILLM {
     const response = await this.client.responses.parse({
       model: this.model,
       input: messages,
-      temperature: 0,
       text: {
         format: zodTextFormat(schema, schemaName),
       },
