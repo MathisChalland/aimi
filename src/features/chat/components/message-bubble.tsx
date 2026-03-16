@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -74,5 +75,38 @@ export function TypingIndicator() {
       <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
       <span className="bg-muted-foreground size-1.5 animate-bounce rounded-full" />
     </Bubble>
+  );
+}
+
+export function MessageBubbleSkeleton({
+  role,
+  width,
+  lines = 1,
+}: {
+  role: "user" | "assistant";
+  width: string;
+  lines?: number;
+}) {
+  const isUser = role === "user";
+
+  return (
+    <div className={cn("flex items-start gap-3", isUser && "flex-row-reverse")}>
+      <div className="flex max-w-[80%] flex-col gap-1">
+        <Bubble isUser={isUser} className={cn("animate-pulse", width)}>
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: lines + 1 }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-3 rounded",
+                  isUser ? "bg-primary-foreground/20" : "bg-foreground/10",
+                  i === lines && "w-3/5",
+                )}
+              />
+            ))}
+          </div>
+        </Bubble>
+      </div>
+    </div>
   );
 }

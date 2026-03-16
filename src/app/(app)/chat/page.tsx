@@ -1,6 +1,9 @@
 "use client";
 
-import { MessageList } from "@/features/chat/components/message-list";
+import {
+  MessageList,
+  MessageListSkeleton,
+} from "@/features/chat/components/message-list";
 import { ChatInput } from "@/features/chat/components/chat-input";
 import { ChatHeader } from "@/features/chat/components/chat-header";
 import { api } from "@/trpc/react";
@@ -17,7 +20,9 @@ export default function ChatPage() {
     return (
       <div className="flex h-dvh w-full flex-col">
         <ChatHeader />
-        <div className="flex flex-1 items-center justify-center" />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <MessageListSkeleton className="mx-auto w-full max-w-4xl px-4 py-6" />
+        </div>
       </div>
     );
   }
