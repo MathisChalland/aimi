@@ -19,12 +19,10 @@ export const chatRouter = createTRPCRouter({
       include: { messages: { orderBy: { createdAt: "asc" } } },
     });
 
-    if (!conversation) {
-      conversation = await ctx.db.conversation.create({
-        data: { userId },
-        include: { messages: { orderBy: { createdAt: "asc" } } },
-      });
-    }
+    conversation ??= await ctx.db.conversation.create({
+      data: { userId },
+      include: { messages: { orderBy: { createdAt: "asc" } } },
+    });
 
     return conversation;
   }),
