@@ -10,7 +10,7 @@ export type Conversation = NonNullable<
   RouterOutputs["chat"]["getUserConversation"]
 >;
 
-export function useSendMessage(conversationId: string) {
+export function useSendMessage(conversationId?: string) {
   const utils = api.useUtils();
 
   const sendMutation = api.chat.send.useMutation({
@@ -29,7 +29,7 @@ export function useSendMessage(conversationId: string) {
               id: crypto.randomUUID(),
               role: newMessage.role,
               content: newMessage.content,
-              conversationId,
+              conversationId: conversationId!,
               createdAt: new Date(),
             },
           ],
@@ -55,6 +55,7 @@ export function useSendMessage(conversationId: string) {
   });
 
   const sendMessage = (content: string) => {
+    if (!conversationId) return;
     const trimmed = content.trim();
     if (!trimmed || sendMutation.isPending) return;
 

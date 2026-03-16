@@ -7,10 +7,10 @@ import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
-  isLoading: boolean;
+  sendDisabled: boolean;
 }
 
-export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -23,13 +23,13 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || sendDisabled) return;
     onSend(trimmed);
     setValue("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [value, isLoading, onSend]);
+  }, [value, sendDisabled, onSend]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -57,7 +57,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
           size="icon"
           className="shrink-0"
           onClick={handleSend}
-          disabled={!value.trim() || isLoading}
+          disabled={!value.trim() || sendDisabled}
         >
           <Send className="size-4" />
         </Button>
