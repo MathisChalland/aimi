@@ -4,6 +4,8 @@ import { useRef, useState, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIsKeyboardOpen } from "@/hooks/use-is-keyboard-open";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -13,6 +15,7 @@ interface ChatInputProps {
 export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isKeyboardOpen = useIsKeyboardOpen({});
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -39,7 +42,9 @@ export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-2 pb-4">
+    <div
+      className={cn("mx-auto w-full max-w-4xl px-2", !isKeyboardOpen && "pb-2")}
+    >
       <div className="bg-background flex items-end gap-2 rounded-2xl border p-1 shadow-sm">
         <Textarea
           ref={textareaRef}
@@ -48,6 +53,7 @@ export function ChatInput({ onSend, sendDisabled }: ChatInputProps) {
             setValue(e.target.value);
             adjustHeight();
           }}
+          onBlur={() => setValue((prev) => prev.trim())}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
           rows={1}
