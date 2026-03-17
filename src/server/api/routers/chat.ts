@@ -56,7 +56,6 @@ export const chatRouter = createTRPCRouter({
       });
       const embedder = new OpenAIEmbedder({
         apiKey: env.OPENAI_API_KEY,
-        model: "text-embedding-3-small",
       });
       const memory = new MemoryService(ctx.db, embedder, openai);
 
@@ -80,11 +79,14 @@ export const chatRouter = createTRPCRouter({
         }),
       ]);
 
-      const assistantMessage = await openai.generateText([
-        getMemoryContextPrompt(memoryContext.results),
-        ...input.messages,
-        input.newMessage,
-      ]);
+      const assistantMessage = await openai.generateText({
+        input: [
+          getMemoryContextPrompt(memoryContext.results),
+          ...input.messages,
+          input.newMessage,
+        ],
+        reasoning: { effort: "low" },
+      });
 
       void memory
         .add({

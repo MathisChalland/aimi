@@ -121,7 +121,7 @@ export class MemoryService {
 
     const searchResults = await Promise.all(
       factVectors.map(({ vec }) =>
-        this.store.searchByVector({ embedding: vec, filters, limit: 20 }),
+        this.store.searchByVector({ embedding: vec, filters, limit: 5 }),
       ),
     );
 
@@ -228,14 +228,14 @@ export class MemoryService {
       ? [this.config.customPrompt, `Input:\n${conversation}`]
       : getFactRetrievalMessages(conversation);
 
-    return this.llm.generate(
-      [
+    return this.llm.generate({
+      messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
-      factExtractionSchema,
-      "fact_extraction",
-    );
+      schema: factExtractionSchema,
+      schemaName: "fact_extraction",
+    });
   }
 
   private async reconcileMemories(params: {
@@ -243,11 +243,13 @@ export class MemoryService {
     newFacts: string[];
   }) {
     const { existing, newFacts } = params;
-    return this.llm.generate(
-      [{ role: "user", content: getUpdateMemoryMessages(existing, newFacts) }],
-      memoryActionSchema,
-      "memory_reconciliation",
-    );
+    return this.llm.generate({
+      messages: [
+        { role: "user", content: getUpdateMemoryMessages(existing, newFacts) },
+      ],
+      schema: memoryActionSchema,
+      schemaName: "memory_reconciliation",
+    });
   }
 }
 
