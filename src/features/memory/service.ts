@@ -256,7 +256,7 @@ export class MemoryService {
 function toMemoryItem(row: Memory): MemoryItem {
   return {
     id: row.id,
-    memory: row.content,
+    content: row.content,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     userId: row.userId,

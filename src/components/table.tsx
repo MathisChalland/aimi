@@ -19,6 +19,8 @@ interface DataTableProps<TData extends { id: string }> {
   onItemClick?: (id: string) => void;
 }
 
+export const EMPTY_DATA = [];
+
 export function DataTable<TData extends { id: string }>({
   table,
   fixedCols,

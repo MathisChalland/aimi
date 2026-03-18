@@ -5,8 +5,9 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { SettingsDialogSidebar } from "./dialog-sidebar";
-import { AccountSettings } from "./account-tab/account-tab";
+import { AccountSettings } from "./account-tab/tab";
 import { authClient } from "@/server/better-auth/client";
+import { MemoryTab } from "./memory-tab/tab";
 
 export function SettingsDialogContent() {
   const [openTab, setOpenTab] = useState("account");
@@ -28,7 +29,7 @@ export function SettingsDialogContent() {
           <div className="flex flex-1 flex-col px-3 py-9 sm:px-15">
             {openTab === "account" && <AccountSettings session={session} />}
             {openTab === "billing" && <div>Billing settings</div>}
-            {openTab === "memory" && <div>Memory settings</div>}
+            {openTab === "memory" && <MemoryTab />}
           </div>
         </div>
       </SettingsDialogSidebar>

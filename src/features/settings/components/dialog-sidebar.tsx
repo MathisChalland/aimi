@@ -19,8 +19,8 @@ const sidebarData = {
       { name: "Billing", icon: CreditCard, value: "billing" },
     ],
   },
-  application: {
-    name: "Application",
+  companion: {
+    name: "Companion",
     items: [{ name: "Memory", icon: Brain, value: "memory" }],
   },
 };

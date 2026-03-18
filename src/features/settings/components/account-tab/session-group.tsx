@@ -2,7 +2,7 @@ import { detectPlatform } from "@/lib/plattform-detect";
 import { authClient, type Session } from "@/server/better-auth/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getSessionCols } from "./device-sessions-cols";
+import { useGetSessionCols } from "./device-sessions-cols";
 import { Setting, SettingsGroup } from "../settings-components";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/table";
@@ -68,7 +68,7 @@ export function DeviceSessionsGroup({ session }: Props) {
     });
   };
 
-  const columns = getSessionCols({
+  const columns = useGetSessionCols({
     current: session?.session.token,
     revokeSession,
   });

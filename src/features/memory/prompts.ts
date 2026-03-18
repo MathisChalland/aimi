@@ -100,7 +100,7 @@ Be warm, supportive, and conversational.`;
     ? `\n\nHere is what you know about this user from past conversations:\n${memories
         .map(
           (m) =>
-            `- ${m.memory} (last updated on ${m.updatedAt.toISOString().split("T")[0]})`,
+            `- ${m.content} (last updated on ${m.updatedAt.toISOString().split("T")[0]})`,
         )
         .join("\n")}`
     : "";

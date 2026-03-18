@@ -84,7 +84,7 @@ export type MemoryAction = z.infer<typeof memoryActionSchema>;
 
 export interface MemoryItem {
   id: string;
-  memory: string;
+  content: string;
   createdAt: Date;
   updatedAt: Date;
   score?: number;
