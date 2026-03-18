@@ -5,9 +5,13 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { SettingsDialogSidebar } from "./dialog-sidebar";
+import { AccountSettings } from "./account-tab";
+import { authClient } from "@/server/better-auth/client";
 
 export function SettingsDialogContent() {
   const [openTab, setOpenTab] = useState("account");
+
+  const { data: session } = authClient.useSession();
 
   return (
     <DialogContent
@@ -22,7 +26,7 @@ export function SettingsDialogContent() {
       <SettingsDialogSidebar openTab={openTab} setOpenTab={setOpenTab}>
         <div className="flex h-full w-full flex-col overflow-y-auto">
           <div className="flex flex-1 flex-col px-15 py-9">
-            {openTab === "account" && <div>Account settings</div>}
+            {openTab === "account" && <AccountSettings session={session} />}
             {openTab === "billing" && <div>Billing settings</div>}
             {openTab === "memory" && <div>Memory settings</div>}
           </div>

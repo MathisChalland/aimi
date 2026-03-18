@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TRPCReactProvider } from "@/trpc/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DialogProvider } from "@/hooks/dialog-provider";
+import { Toaster } from "sonner";
 
 export default async function RootLayout({
   children,
@@ -15,7 +16,10 @@ export default async function RootLayout({
   return (
     <TRPCReactProvider>
       <TooltipProvider>
-        <DialogProvider>{children}</DialogProvider>
+        <DialogProvider>
+          {children}
+          <Toaster />
+        </DialogProvider>
       </TooltipProvider>
     </TRPCReactProvider>
   );
