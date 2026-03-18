@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   isLoading?: boolean;
@@ -16,6 +17,15 @@ export function AsyncButton({
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> & Props) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [width, setWidth] = useState<number>();
+
+  useEffect(() => {
+    if (buttonRef.current && !width) {
+      setWidth(buttonRef.current.offsetWidth);
+    }
+  }, [width]);
+
   return (
     <Button
       {...props}
@@ -24,6 +34,8 @@ export function AsyncButton({
       size={size}
       // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       disabled={isLoading || props.disabled}
+      ref={buttonRef}
+      style={width ? { minWidth: `${width}px` } : undefined}
     >
       {isLoading ? (
         <LoaderCircle className="mx-auto animate-spin" />
