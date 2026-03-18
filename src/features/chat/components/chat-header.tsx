@@ -1,12 +1,21 @@
+"use client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { SettingsDialogContent } from "@/features/settings/components/settings-dialog-content";
+import { useDialog } from "@/hooks/dialog-provider";
 import { Bot, MoreVertical, Phone } from "lucide-react";
+import { useCallback } from "react";
 
 interface ChatHeaderProps {
   companionName?: string;
 }
 
 export function ChatHeader({ companionName = "Aimi" }: ChatHeaderProps) {
+  const { showDialog } = useDialog();
+  const openSettings = useCallback(() => {
+    showDialog(<SettingsDialogContent />);
+  }, [showDialog]);
+
   return (
     <div className="bg-background flex shrink-0 border-b px-2 py-3">
       <div className="mx-auto flex w-full max-w-4xl items-center justify-between">
@@ -25,7 +34,7 @@ export function ChatHeader({ companionName = "Aimi" }: ChatHeaderProps) {
           <Button variant="ghost" size="icon-lg">
             <Phone className="size-5" />
           </Button>
-          <Button variant="ghost" size="icon-lg">
+          <Button variant="ghost" size="icon-lg" onClick={openSettings}>
             <MoreVertical className="size-5" />
           </Button>
         </div>
