@@ -49,4 +49,25 @@ export const memoryRouter = createTRPCRouter({
 
       return result.results;
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()) }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      await ctx.db.memory.deleteMany({
+        where: {
+          id: { in: input.ids },
+          userId,
+        },
+      });
+    }),
+
+  deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    await ctx.db.memory.deleteMany({
+      where: {
+        userId,
+      },
+    });
+  }),
 });

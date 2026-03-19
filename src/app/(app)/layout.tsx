@@ -4,6 +4,7 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DialogProvider } from "@/hooks/dialog-provider";
 import { Toaster } from "sonner";
+import { ConfirmationDialogProvider } from "@/hooks/confirmation-dialog";
 
 export default async function RootLayout({
   children,
@@ -16,10 +17,12 @@ export default async function RootLayout({
   return (
     <TRPCReactProvider>
       <TooltipProvider>
-        <DialogProvider>
-          {children}
-          <Toaster />
-        </DialogProvider>
+        <ConfirmationDialogProvider>
+          <DialogProvider>
+            {children}
+            <Toaster />
+          </DialogProvider>
+        </ConfirmationDialogProvider>
       </TooltipProvider>
     </TRPCReactProvider>
   );

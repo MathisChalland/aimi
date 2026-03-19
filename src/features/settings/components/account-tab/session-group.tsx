@@ -14,7 +14,7 @@ interface Props {
 }
 export function DeviceSessionsGroup({ session }: Props) {
   const queryClient = useQueryClient();
-  const { data: deviceSessions } = useQuery({
+  const { data: deviceSessions, isLoading } = useQuery({
     queryKey: ["user-device-sessions"],
     queryFn: () => authClient.listSessions(),
     select: (result) =>
@@ -96,7 +96,7 @@ export function DeviceSessionsGroup({ session }: Props) {
           Log out of all devices
         </Button>
       </Setting>
-      <DataTable table={table} fixedCols={["log-out"]} />
+      <DataTable table={table} fixedCols={["log-out"]} isLoading={isLoading} />
     </SettingsGroup>
   );
 }

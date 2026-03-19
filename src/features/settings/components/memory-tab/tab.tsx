@@ -6,10 +6,13 @@ import {
 } from "../settings-components";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { DataTable, EMPTY_DATA } from "@/components/table";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { SearchInput } from "@/components/basic/search-input";
 import { memoryColumns } from "./memory-cols";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { AsyncButton } from "@/components/basic/async-action-button";
+import { Separator } from "@/components/ui/separator";
+import { useConfirmationDialog } from "@/hooks/confirmation-dialog";
 
 interface TableRow {
   id: string;
@@ -25,7 +28,9 @@ export function MemoryTab() {
     1000,
   );
 
-  const { data: allMemories } = api.memory.getAll.useQuery();
+  const utils = api.useUtils();
+
+  const { data: allMemories, isLoading } = api.memory.getAll.useQuery();
   const {
     data: searchResults,
     isFetching: isSearching,
@@ -51,12 +56,34 @@ export function MemoryTab() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const deleteAllMemories = api.memory.deleteAll.useMutation({
+    async onSuccess() {
+      await utils.memory.getAll.cancel();
+      utils.memory.getAll.setData(undefined, []);
+      void utils.memory.invalidate();
+    },
+  });
+
+  const { confirm } = useConfirmationDialog();
+
+  const handleDeleteAll = async () => {
+    const confirmed = await confirm({
+      title: "Delete all memories?",
+      description: "This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "destructive",
+    });
+    if (confirmed) {
+      deleteAllMemories.mutate();
+    }
+  };
+
   return (
     <SettingsContent>
       <SettingsGroup title="Memory">
         <Setting
           title="Query"
-          description="Enter a prompt to see how memories are retrieved."
+          description="Enter a query to see how memories are retrieved."
           className="items-center"
         >
           <SearchInput
@@ -72,7 +99,26 @@ export function MemoryTab() {
             }}
           />
         </Setting>
-        <DataTable table={table} />
+        <DataTable table={table} isLoading={isLoading} />
+        {allMemories && allMemories.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <Setting
+              title="Delete all"
+              description="Permanently delete all memories your companion has about you."
+            >
+              <AsyncButton
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={handleDeleteAll}
+                isLoading={deleteAllMemories.isPending}
+              >
+                Delete all
+              </AsyncButton>
+            </Setting>
+          </>
+        )}
       </SettingsGroup>
     </SettingsContent>
   );

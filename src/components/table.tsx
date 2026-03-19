@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
 
 interface DataTableProps<TData extends { id: string }> {
   table: TableState<TData>;
@@ -17,6 +18,7 @@ interface DataTableProps<TData extends { id: string }> {
     event: React.MouseEvent,
   ) => void;
   onItemClick?: (id: string) => void;
+  isLoading?: boolean;
 }
 
 export const EMPTY_DATA = [];
@@ -26,6 +28,7 @@ export function DataTable<TData extends { id: string }>({
   fixedCols,
   handleRowSelection,
   onItemClick,
+  isLoading,
 }: DataTableProps<TData>) {
   return (
     <div className="w-full rounded-xl select-none">
@@ -122,7 +125,11 @@ export function DataTable<TData extends { id: string }>({
                 colSpan={table.getVisibleFlatColumns().length}
                 className="h-24 text-center"
               >
-                No results.
+                {isLoading ? (
+                  <Loader2 className="mx-auto size-4 animate-spin" />
+                ) : (
+                  "No results."
+                )}
               </TableCell>
             </TableRow>
           )}
