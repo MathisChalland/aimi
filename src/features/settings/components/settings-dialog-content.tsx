@@ -8,6 +8,7 @@ import { SettingsDialogSidebar } from "./dialog-sidebar";
 import { AccountSettings } from "./account-tab/tab";
 import { authClient } from "@/server/better-auth/client";
 import { MemoryTab } from "./memory-tab/tab";
+import { ChatTab } from "./chat-tab/tab";
 
 export function SettingsDialogContent() {
   const [openTab, setOpenTab] = useState("account");
@@ -30,6 +31,7 @@ export function SettingsDialogContent() {
             {openTab === "account" && <AccountSettings session={session} />}
             {openTab === "billing" && <div>Billing settings</div>}
             {openTab === "memory" && <MemoryTab />}
+            {openTab === "chat" && <ChatTab />}
           </div>
         </div>
       </SettingsDialogSidebar>

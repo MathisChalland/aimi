@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   Sidebar,
 } from "@/components/ui/sidebar";
-import { Brain, CreditCard, User } from "lucide-react";
+import { Brain, CreditCard, MessageSquare, User } from "lucide-react";
 
 const sidebarData = {
   personal: {
@@ -21,7 +21,10 @@ const sidebarData = {
   },
   companion: {
     name: "Companion",
-    items: [{ name: "Memory", icon: Brain, value: "memory" }],
+    items: [
+      { name: "Chat", icon: MessageSquare, value: "chat" },
+      { name: "Memory", icon: Brain, value: "memory" },
+    ],
   },
 };
 

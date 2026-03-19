@@ -106,4 +106,18 @@ export const chatRouter = createTRPCRouter({
 
       return savedAssistantMessage;
     }),
+
+  deleteChatHistory: protectedProcedure.mutation(async ({ ctx, input }) => {
+    const userId = ctx.session.user.id;
+    const conversation = await ctx.db.conversation.findFirst({
+      where: { userId },
+    });
+    if (!conversation) throw new Error("No conversation found");
+
+    await ctx.db.message.deleteMany({
+      where: {
+        conversationId: conversation.id,
+      },
+    });
+  }),
 });
