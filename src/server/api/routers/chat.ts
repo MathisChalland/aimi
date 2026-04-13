@@ -6,6 +6,7 @@ import { env } from "@/env";
 import { MemoryService } from "@/features/memory/service";
 import { OpenAIEmbedder } from "@/features/ai/embedding";
 import { getMemoryContextPrompt } from "@/features/memory/prompts";
+import { after } from "next/server";
 
 const llmCallInputSchema = z.object({
   conversationId: z.string(),
@@ -89,20 +90,24 @@ export const chatRouter = createTRPCRouter({
         reasoning: { effort: "low" },
       });
 
-      void memory
-        .add({
-          messages: [input.newMessage],
-          userId: ctx.session.user.id,
-          companionId: input.companionId,
-          metadata: { conversationId: input.conversationId },
-        })
-        .catch((err) => console.error("Background memory.add failed:", err));
-
       const savedAssistantMessage = await ctx.db.message.create({
         data: {
           ...assistantMessage,
           conversationId: input.conversationId,
         },
+      });
+
+      after(async () => {
+        try {
+          await memory.add({
+            messages: [input.newMessage],
+            userId: ctx.session.user.id,
+            companionId: input.companionId,
+            metadata: { conversationId: input.conversationId },
+          });
+        } catch (err) {
+          console.error("Background memory.add failed:", err);
+        }
       });
 
       return savedAssistantMessage;
