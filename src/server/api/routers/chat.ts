@@ -59,10 +59,11 @@ export const chatRouter = createTRPCRouter({
       });
       const memory = new MemoryService(ctx.db, embedder, openai);
 
-      const [, memoryContext] = await Promise.all([
-        ctx.db.conversation.findUniqueOrThrow({
-          where: { id: input.conversationId, userId: ctx.session.user.id },
-        }),
+      await ctx.db.conversation.findUniqueOrThrow({
+        where: { id: input.conversationId, userId: ctx.session.user.id },
+      });
+
+      const [memoryContext] = await Promise.all([
         memory.search({
           query: input.newMessage.content,
           userId: ctx.session.user.id,
