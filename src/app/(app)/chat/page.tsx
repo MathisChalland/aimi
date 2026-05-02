@@ -11,7 +11,7 @@ import { useSendMessage } from "@/features/chat/use-send-message";
 
 export default function ChatPage() {
   const { data: conversation } = api.chat.getUserConversation.useQuery();
-  const { sendMessage, isResponding } = useSendMessage(
+  const { sendMessage, isResponding, isStreaming, streamingMessageId } = useSendMessage(
     conversation?.id,
     conversation?.companionId,
   );
@@ -19,11 +19,13 @@ export default function ChatPage() {
   return (
     <div className="flex h-dvh w-full flex-col">
       <ChatHeader companionName={conversation?.companion.name} />
-      <div className="-mb-0.5 min-h-0 flex-1 overflow-y-auto">
+      <div data-scroll-container className="-mb-0.5 min-h-0 flex-1 overflow-y-auto">
         {conversation ? (
           <MessageList
             messages={conversation.messages}
             isTyping={isResponding}
+            isStreaming={isStreaming}
+            streamingMessageId={streamingMessageId}
             className="mx-auto w-full max-w-4xl px-4 py-6"
           />
         ) : (

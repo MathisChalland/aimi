@@ -55,4 +55,23 @@ export class OpenAILLM {
       content: response.output_text,
     };
   }
+
+  async *generateTextStream(params: {
+    input: BaseMessage[];
+    reasoning?: Reasoning;
+  }): AsyncGenerator<string, void, unknown> {
+    const stream = await this.client.responses.create({
+      model: this.model,
+      input: params.input,
+      reasoning: params.reasoning,
+      store: false,
+      stream: true,
+    });
+
+    for await (const event of stream) {
+      if (event.type === "response.output_text.delta") {
+        yield event.delta;
+      }
+    }
+  }
 }

@@ -8,9 +8,13 @@ import {
 } from "../settings-components";
 import { api } from "@/trpc/react";
 import { AsyncButton } from "@/components/basic/async-action-button";
+import { Switch } from "@/components/ui/switch";
+import { useStreamingPreference } from "@/features/settings/hooks/use-streaming-preference";
 
 export function ChatTab() {
   const { confirm } = useConfirmationDialog();
+  const { enabled: streamingEnabled, toggle: toggleStreaming } =
+    useStreamingPreference();
 
   const utils = api.useUtils();
 
@@ -34,6 +38,17 @@ export function ChatTab() {
 
   return (
     <SettingsContent>
+      <SettingsGroup title="Response Behavior">
+        <Setting
+          title="Stream responses"
+          description="Show the assistant's response as it's being generated with a typewriter effect."
+        >
+          <Switch
+            checked={streamingEnabled}
+            onCheckedChange={toggleStreaming}
+          />
+        </Setting>
+      </SettingsGroup>
       <SettingsGroup title="Chat History">
         <Setting
           title="Delete chat history"

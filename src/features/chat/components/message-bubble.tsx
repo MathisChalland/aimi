@@ -7,12 +7,14 @@ interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   createdAt: Date;
+  isStreaming?: boolean;
 }
 
 export function MessageBubble({
   role,
   content,
   createdAt,
+  isStreaming,
 }: MessageBubbleProps) {
   const isUser = role === "user";
 
@@ -20,9 +22,16 @@ export function MessageBubble({
     <div className={cn("flex items-start gap-3", isUser && "flex-row-reverse")}>
       <div className="flex max-w-[80%] flex-col gap-1">
         <Bubble isUser={isUser}>
-          <p className="whitespace-pre-wrap">{content}</p>
+          <p className="whitespace-pre-wrap">
+            {content}
+            {isStreaming && (
+              <span className="ml-0.5 inline-block w-[1.5px] h-[1em] align-middle bg-current animate-pulse" />
+            )}
+          </p>
         </Bubble>
-        <Timestamp date={createdAt} className={cn(isUser && "text-right")} />
+        {!isStreaming && (
+          <Timestamp date={createdAt} className={cn(isUser && "text-right")} />
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,8 @@ import { MemoryService } from "@/features/memory/service";
 import { OpenAIEmbedder } from "@/features/ai/embedding";
 import { getMemoryContextPrompt } from "@/features/memory/prompts";
 import { after } from "next/server";
+import type { PrismaClient } from "@prisma/client";
+import type { BaseMessage } from "@/features/ai/schemas";
 
 const llmCallInputSchema = z.object({
   conversationId: z.string(),
@@ -14,6 +16,69 @@ const llmCallInputSchema = z.object({
   messages: z.array(baseMessageSchema),
   newMessage: baseMessageSchema,
 });
+
+type LlmCallInput = z.infer<typeof llmCallInputSchema>;
+
+async function prepareLlmCall(
+  db: PrismaClient,
+  input: LlmCallInput,
+  userId: string,
+) {
+  const openai = new OpenAILLM({
+    apiKey: env.OPENAI_API_KEY,
+    model: "gpt-5-mini-2025-08-07",
+  });
+  const embedder = new OpenAIEmbedder({ apiKey: env.OPENAI_API_KEY });
+  const memory = new MemoryService(db, embedder, openai);
+
+  await db.conversation.findUniqueOrThrow({
+    where: { id: input.conversationId, userId },
+  });
+
+  const [memoryContext] = await Promise.all([
+    memory.search({
+      query: input.newMessage.content,
+      userId,
+      companionId: input.companionId,
+      threshold: 0,
+      limit: 20,
+    }),
+    db.message.create({
+      data: {
+        role: input.newMessage.role,
+        content: input.newMessage.content,
+        conversationId: input.conversationId,
+      },
+    }),
+  ]);
+
+  const llmInput: BaseMessage[] = [
+    getMemoryContextPrompt(memoryContext.results),
+    ...input.messages,
+    input.newMessage,
+  ];
+
+  return { openai, memory, llmInput };
+}
+
+function scheduleMemoryAdd(
+  memory: MemoryService,
+  input: LlmCallInput,
+  userId: string,
+) {
+  after(async () => {
+    try {
+      await memory.add({
+        messages: [input.newMessage],
+        userId,
+        companionId: input.companionId,
+        metadata: { conversationId: input.conversationId },
+      });
+    } catch (err) {
+      console.error("Background memory.add failed:", err);
+    }
+  });
+}
 
 export const chatRouter = createTRPCRouter({
   getUserConversation: protectedProcedure.query(async ({ ctx }) => {
@@ -51,42 +116,15 @@ export const chatRouter = createTRPCRouter({
   send: protectedProcedure
     .input(llmCallInputSchema)
     .mutation(async ({ ctx, input }) => {
-      const openai = new OpenAILLM({
-        apiKey: env.OPENAI_API_KEY,
-        model: "gpt-5-mini-2025-08-07",
-      });
-      const embedder = new OpenAIEmbedder({
-        apiKey: env.OPENAI_API_KEY,
-      });
-      const memory = new MemoryService(ctx.db, embedder, openai);
-
-      await ctx.db.conversation.findUniqueOrThrow({
-        where: { id: input.conversationId, userId: ctx.session.user.id },
-      });
-
-      const [memoryContext] = await Promise.all([
-        memory.search({
-          query: input.newMessage.content,
-          userId: ctx.session.user.id,
-          companionId: input.companionId,
-          threshold: 0,
-          limit: 20,
-        }),
-        ctx.db.message.create({
-          data: {
-            role: input.newMessage.role,
-            content: input.newMessage.content,
-            conversationId: input.conversationId,
-          },
-        }),
-      ]);
+      const userId = ctx.session.user.id;
+      const { openai, memory, llmInput } = await prepareLlmCall(
+        ctx.db,
+        input,
+        userId,
+      );
 
       const assistantMessage = await openai.generateText({
-        input: [
-          getMemoryContextPrompt(memoryContext.results),
-          ...input.messages,
-          input.newMessage,
-        ],
+        input: llmInput,
         reasoning: { effort: "low" },
       });
 
@@ -97,23 +135,49 @@ export const chatRouter = createTRPCRouter({
         },
       });
 
-      after(async () => {
-        try {
-          await memory.add({
-            messages: [input.newMessage],
-            userId: ctx.session.user.id,
-            companionId: input.companionId,
-            metadata: { conversationId: input.conversationId },
-          });
-        } catch (err) {
-          console.error("Background memory.add failed:", err);
-        }
-      });
+      scheduleMemoryAdd(memory, input, userId);
 
       return savedAssistantMessage;
     }),
 
-  deleteChatHistory: protectedProcedure.mutation(async ({ ctx, input }) => {
+  sendStream: protectedProcedure
+    .input(llmCallInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const { openai, memory, llmInput } = await prepareLlmCall(
+        ctx.db,
+        input,
+        userId,
+      );
+
+      const db = ctx.db;
+      const conversationId = input.conversationId;
+
+      async function* textStream() {
+        let fullText = "";
+        for await (const delta of openai.generateTextStream({
+          input: llmInput,
+          reasoning: { effort: "low" },
+        })) {
+          fullText += delta;
+          yield delta;
+        }
+
+        await db.message.create({
+          data: {
+            role: "assistant",
+            content: fullText,
+            conversationId,
+          },
+        });
+
+        scheduleMemoryAdd(memory, input, userId);
+      }
+
+      return { textStream: textStream() };
+    }),
+
+  deleteChatHistory: protectedProcedure.mutation(async ({ ctx }) => {
     const userId = ctx.session.user.id;
     const conversation = await ctx.db.conversation.findFirst({
       where: { userId },
