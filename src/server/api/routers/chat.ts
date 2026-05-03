@@ -6,6 +6,10 @@ import { env } from "@/env";
 import { MemoryService } from "@/features/memory/service";
 import { OpenAIEmbedder } from "@/features/ai/embedding";
 import { getMemoryContextPrompt } from "@/features/memory/prompts";
+import {
+  companionConfigSchema,
+  type CompanionContext,
+} from "@/features/companion/schemas";
 import { after } from "next/server";
 import type { PrismaClient } from "@prisma/client";
 import type { BaseMessage } from "@/features/ai/schemas";
@@ -35,13 +39,22 @@ async function prepareLlmCall(
     where: { id: input.conversationId, userId },
   });
 
-  const [memoryContext] = await Promise.all([
+  const [memoryContext, companion] = await Promise.all([
     memory.search({
       query: input.newMessage.content,
       userId,
       companionId: input.companionId,
       threshold: 0,
       limit: 20,
+    }),
+    db.companion.findUniqueOrThrow({
+      where: { id: input.companionId, userId },
+      select: {
+        name: true,
+        personalityTags: true,
+        customInstructions: true,
+        communicationStyle: true,
+      },
     }),
     db.message.create({
       data: {
@@ -52,8 +65,16 @@ async function prepareLlmCall(
     }),
   ]);
 
+  const companionContext: CompanionContext = {
+    name: companion.name,
+    personalityTags: companion.personalityTags,
+    customInstructions: companion.customInstructions,
+    communicationStyle:
+      companion.communicationStyle as CompanionContext["communicationStyle"],
+  };
+
   const llmInput: BaseMessage[] = [
-    getMemoryContextPrompt(memoryContext.results),
+    getMemoryContextPrompt(memoryContext.results, companionContext),
     ...input.messages,
     input.newMessage,
   ];
@@ -244,6 +265,42 @@ export const chatRouter = createTRPCRouter({
 
       await ctx.db.companion.delete({
         where: { id: input.companionId, userId },
+      });
+    }),
+
+  getCompanionConfig: protectedProcedure
+    .input(z.object({ companionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.companion.findUniqueOrThrow({
+        where: { id: input.companionId, userId: ctx.session.user.id },
+        select: {
+          personalityTags: true,
+          customInstructions: true,
+          communicationStyle: true,
+        },
+      });
+    }),
+
+  updateCompanionConfig: protectedProcedure
+    .input(
+      z.object({
+        companionId: z.string(),
+        config: companionConfigSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.companion.update({
+        where: { id: input.companionId, userId: ctx.session.user.id },
+        data: {
+          personalityTags: input.config.personalityTags,
+          customInstructions: input.config.customInstructions,
+          communicationStyle: input.config.communicationStyle,
+        },
+        select: {
+          personalityTags: true,
+          customInstructions: true,
+          communicationStyle: true,
+        },
       });
     }),
 });

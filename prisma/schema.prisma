@@ -90,6 +90,10 @@ model Companion {
   name   String
   userId String
 
+  personalityTags    String[] @default([])
+  customInstructions String?
+  communicationStyle String   @default("balanced")
+
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   memories      Memory[]
   conversations Conversation[]
