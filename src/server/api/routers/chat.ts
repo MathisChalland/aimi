@@ -81,37 +81,62 @@ function scheduleMemoryAdd(
 }
 
 export const chatRouter = createTRPCRouter({
-  getUserConversation: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-
-    let conversation = await ctx.db.conversation.findFirst({
-      where: { userId },
-      include: {
-        companion: true,
-        messages: { orderBy: { createdAt: "asc" } },
-      },
-    });
-
-    conversation ??= await ctx.db.conversation.create({
-      data: {
-        user: {
-          connect: { id: userId },
-        },
-        companion: {
-          create: {
-            name: "Aimi",
-            userId,
+  getCompanions: protectedProcedure.query(async ({ ctx }) => {
+    const companions = await ctx.db.companion.findMany({
+      where: { userId: ctx.session.user.id },
+      select: {
+        id: true,
+        name: true,
+        conversations: {
+          select: {
+            messages: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              select: { createdAt: true },
+            },
           },
+          take: 1,
         },
-      },
-      include: {
-        companion: true,
-        messages: { orderBy: { createdAt: "asc" } },
       },
     });
 
-    return conversation;
+    return companions
+      .sort((a, b) => {
+        const aTime =
+          a.conversations[0]?.messages[0]?.createdAt?.getTime() ?? 0;
+        const bTime =
+          b.conversations[0]?.messages[0]?.createdAt?.getTime() ?? 0;
+        return bTime - aTime;
+      })
+      .map(({ id, name }) => ({ id, name }));
   }),
+
+  getUserConversation: protectedProcedure
+    .input(z.object({ companionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      let conversation = await ctx.db.conversation.findFirst({
+        where: { userId, companionId: input.companionId },
+        include: {
+          companion: true,
+          messages: { orderBy: { createdAt: "asc" } },
+        },
+      });
+
+      conversation ??= await ctx.db.conversation.create({
+        data: {
+          user: { connect: { id: userId } },
+          companion: { connect: { id: input.companionId } },
+        },
+        include: {
+          companion: true,
+          messages: { orderBy: { createdAt: "asc" } },
+        },
+      });
+
+      return conversation;
+    }),
 
   send: protectedProcedure
     .input(llmCallInputSchema)
@@ -177,17 +202,48 @@ export const chatRouter = createTRPCRouter({
       return { textStream: textStream() };
     }),
 
-  deleteChatHistory: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    const conversation = await ctx.db.conversation.findFirst({
-      where: { userId },
-    });
-    if (!conversation) throw new Error("No conversation found");
+  deleteChatHistory: protectedProcedure
+    .input(z.object({ conversationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const conversation = await ctx.db.conversation.findFirst({
+        where: { id: input.conversationId, userId },
+      });
+      if (!conversation) throw new Error("No conversation found");
 
-    await ctx.db.message.deleteMany({
-      where: {
-        conversationId: conversation.id,
-      },
-    });
-  }),
+      await ctx.db.message.deleteMany({
+        where: { conversationId: conversation.id },
+      });
+    }),
+
+  createCompanion: protectedProcedure
+    .input(z.object({ name: z.string().min(1).max(50) }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.companion.create({
+        data: { name: input.name, userId: ctx.session.user.id },
+        select: { id: true, name: true },
+      });
+    }),
+
+  renameCompanion: protectedProcedure
+    .input(z.object({ companionId: z.string(), name: z.string().min(1).max(50) }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.companion.update({
+        where: { id: input.companionId, userId: ctx.session.user.id },
+        data: { name: input.name },
+        select: { id: true, name: true },
+      });
+    }),
+
+  deleteCompanion: protectedProcedure
+    .input(z.object({ companionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const count = await ctx.db.companion.count({ where: { userId } });
+      if (count <= 1) throw new Error("Cannot delete your only companion");
+
+      await ctx.db.companion.delete({
+        where: { id: input.companionId, userId },
+      });
+    }),
 });

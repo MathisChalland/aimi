@@ -1,40 +1,30 @@
-"use client";
+import { getSession } from "@/server/better-auth/server";
+import { db } from "@/server/db";
+import { redirect } from "next/navigation";
 
-import {
-  MessageList,
-  MessageListSkeleton,
-} from "@/features/chat/components/message-list";
-import { ChatInput } from "@/features/chat/components/chat-input";
-import { ChatHeader } from "@/features/chat/components/chat-header";
-import { api } from "@/trpc/react";
-import { useSendMessage } from "@/features/chat/use-send-message";
+export default async function ChatRedirectPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-export default function ChatPage() {
-  const { data: conversation } = api.chat.getUserConversation.useQuery();
-  const { sendMessage, isResponding, isStreaming, streamingMessageId } = useSendMessage(
-    conversation?.id,
-    conversation?.companionId,
-  );
+  const latestMessage = await db.message.findFirst({
+    where: { conversation: { userId: session.user.id } },
+    orderBy: { createdAt: "desc" },
+    select: { conversation: { select: { companionId: true } } },
+  });
 
-  return (
-    <div className="flex h-dvh w-full flex-col">
-      <ChatHeader companionName={conversation?.companion.name} />
-      <div data-scroll-container className="-mb-0.5 min-h-0 flex-1 overflow-y-auto">
-        {conversation ? (
-          <MessageList
-            messages={conversation.messages}
-            isTyping={isResponding}
-            isStreaming={isStreaming}
-            streamingMessageId={streamingMessageId}
-            className="mx-auto w-full max-w-4xl px-4 py-6"
-          />
-        ) : (
-          <MessageListSkeleton className="mx-auto w-full max-w-4xl px-4 py-6" />
-        )}
-      </div>
-      <div className="z-10 shrink-0">
-        <ChatInput onSend={sendMessage} sendDisabled={isResponding} />
-      </div>
-    </div>
-  );
+  if (latestMessage) {
+    redirect(`/chat/${latestMessage.conversation.companionId}`);
+  }
+
+  const companion =
+    (await db.companion.findFirst({
+      where: { userId: session.user.id },
+      select: { id: true },
+    })) ??
+    (await db.companion.create({
+      data: { name: "Aimi", userId: session.user.id },
+      select: { id: true },
+    }));
+
+  redirect(`/chat/${companion.id}`);
 }

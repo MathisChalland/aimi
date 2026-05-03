@@ -22,7 +22,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
   const buildMutationInput = useCallback(
     (content: string) => {
       const currentMessages =
-        utils.chat.getUserConversation.getData()?.messages ?? [];
+        utils.chat.getUserConversation.getData({ companionId: companionId! })?.messages ?? [];
       const contextMessages = currentMessages
         .slice(-(LLM_CONTEXT_SIZE - 1))
         .map(({ role, content }) => ({ role, content }));
@@ -39,7 +39,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
 
   const optimisticAddUserMessage = useCallback(
     (content: string) => {
-      utils.chat.getUserConversation.setData(undefined, (old) => {
+      utils.chat.getUserConversation.setData({ companionId: companionId! }, (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -56,25 +56,25 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
         };
       });
     },
-    [conversationId, utils],
+    [conversationId, companionId, utils],
   );
 
   const sendMutation = api.chat.send.useMutation({
     onMutate: async ({ newMessage }) => {
       await utils.chat.getUserConversation.cancel();
-      const previous = utils.chat.getUserConversation.getData();
+      const previous = utils.chat.getUserConversation.getData({ companionId: companionId! });
       optimisticAddUserMessage(newMessage.content);
       return { previous };
     },
     onSuccess: (response) => {
-      utils.chat.getUserConversation.setData(undefined, (old) => {
+      utils.chat.getUserConversation.setData({ companionId: companionId! }, (old) => {
         if (!old) return old;
         return { ...old, messages: [...old.messages, response] };
       });
     },
     onError: (_err, _variables, context) => {
       if (context?.previous) {
-        utils.chat.getUserConversation.setData(undefined, context.previous);
+        utils.chat.getUserConversation.setData({ companionId: companionId! }, context.previous);
       }
     },
   });
@@ -86,7 +86,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
       if (!conversationId || !companionId) return;
 
       const input = buildMutationInput(content);
-      const previous = utils.chat.getUserConversation.getData();
+      const previous = utils.chat.getUserConversation.getData({ companionId });
       const tempId = crypto.randomUUID();
       streamingMessageIdRef.current = tempId;
 
@@ -108,7 +108,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
           if (firstChunk) {
             firstChunk = false;
             setHasFirstChunk(true);
-            utils.chat.getUserConversation.setData(undefined, (old) => {
+            utils.chat.getUserConversation.setData({ companionId }, (old) => {
               if (!old) return old;
               return {
                 ...old,
@@ -132,7 +132,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
             requestAnimationFrame(() => {
               rafScheduled = false;
               const latest = accumulated;
-              utils.chat.getUserConversation.setData(undefined, (old) => {
+              utils.chat.getUserConversation.setData({ companionId }, (old) => {
                 if (!old) return old;
                 return {
                   ...old,
@@ -145,7 +145,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
           }
         }
 
-        utils.chat.getUserConversation.setData(undefined, (old) => {
+        utils.chat.getUserConversation.setData({ companionId }, (old) => {
           if (!old) return old;
           return {
             ...old,
@@ -164,7 +164,7 @@ export function useSendMessage(conversationId?: string, companionId?: string) {
         setHasFirstChunk(false);
         streamingMessageIdRef.current = null;
         if (previous) {
-          utils.chat.getUserConversation.setData(undefined, previous);
+          utils.chat.getUserConversation.setData({ companionId }, previous);
         }
       }
     },
