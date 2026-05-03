@@ -25,7 +25,7 @@ export function MessageBubble({
           <p className="whitespace-pre-wrap">
             {content}
             {isStreaming && (
-              <span className="ml-0.5 inline-block w-[1.5px] h-[1em] align-middle bg-current animate-pulse" />
+              <span className="ml-0.5 inline-block w-0.5 h-[1em] align-[-2px] bg-current animate-caret-blink" />
             )}
           </p>
         </Bubble>
