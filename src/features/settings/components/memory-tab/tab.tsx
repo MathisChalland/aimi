@@ -13,6 +13,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { AsyncButton } from "@/components/basic/async-action-button";
 import { Separator } from "@/components/ui/separator";
 import { useConfirmationDialog } from "@/hooks/confirmation-dialog";
+import { usePathname } from "next/navigation";
 
 interface TableRow {
   id: string;
@@ -22,6 +23,9 @@ interface TableRow {
 }
 
 export function MemoryTab() {
+  const pathname = usePathname();
+  const companionId = pathname.split("/chat/")[1];
+
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useDebouncedValue(
     query.trim(),
@@ -30,15 +34,17 @@ export function MemoryTab() {
 
   const utils = api.useUtils();
 
-  const { data: allMemories, isLoading } = api.memory.getAll.useQuery();
+  const { data: allMemories, isLoading } = api.memory.getAll.useQuery(
+    { companionId: companionId! },
+    { enabled: !!companionId },
+  );
   const {
     data: searchResults,
     isFetching: isSearching,
-    isError: isSearchError,
   } = api.memory.search.useQuery(
-    { query: debouncedQuery, limit: 20 },
+    { query: debouncedQuery, companionId, limit: 20 },
     {
-      enabled: debouncedQuery.length > 0,
+      enabled: debouncedQuery.length > 0 && !!companionId,
       refetchOnWindowFocus: false,
     },
   );
@@ -58,8 +64,9 @@ export function MemoryTab() {
 
   const deleteAllMemories = api.memory.deleteAll.useMutation({
     async onSuccess() {
+      if (!companionId) return;
       await utils.memory.getAll.cancel();
-      utils.memory.getAll.setData(undefined, []);
+      utils.memory.getAll.setData({ companionId }, []);
       void utils.memory.invalidate();
     },
   });
@@ -67,6 +74,7 @@ export function MemoryTab() {
   const { confirm } = useConfirmationDialog();
 
   const handleDeleteAll = async () => {
+    if (!companionId) return;
     const confirmed = await confirm({
       title: "Delete all memories?",
       description: "This action cannot be undone.",
@@ -74,7 +82,7 @@ export function MemoryTab() {
       variant: "destructive",
     });
     if (confirmed) {
-      deleteAllMemories.mutate();
+      deleteAllMemories.mutate({ companionId });
     }
   };
 

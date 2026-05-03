@@ -13,19 +13,21 @@ const searchMemoryInputSchema = z.object({
 });
 
 export const memoryRouter = createTRPCRouter({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    const memories = await ctx.db.memory.findMany({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        id: true,
-        content: true,
-        updatedAt: true,
-      },
-    });
-    return memories;
-  }),
+  getAll: protectedProcedure
+    .input(z.object({ companionId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const memories = await ctx.db.memory.findMany({
+        where: { userId, companionId: input.companionId },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          content: true,
+          updatedAt: true,
+        },
+      });
+      return memories;
+    }),
 
   search: protectedProcedure
     .input(searchMemoryInputSchema)
@@ -62,12 +64,15 @@ export const memoryRouter = createTRPCRouter({
       });
     }),
 
-  deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
-    await ctx.db.memory.deleteMany({
-      where: {
-        userId,
-      },
-    });
-  }),
+  deleteAll: protectedProcedure
+    .input(z.object({ companionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      await ctx.db.memory.deleteMany({
+        where: {
+          userId,
+          companionId: input.companionId,
+        },
+      });
+    }),
 });
